@@ -33,13 +33,9 @@ public class BackPressure {
     public Map<String, Double> getBackPressedSubtasks() {
         Map<String, Double> metrics = new HashMap<>();
         if (subtasks != null && !subtasks.isEmpty()) {
-            subtasks.stream().filter(item -> item.getBackpressureLevel().equalsIgnoreCase("high"))
-                    .forEach( item ->
-                            metrics.put(vertexName + item.getSubtask(), item.getRatio() * 100 )
-                    );
-
-
-
+            subtasks.stream().forEach( item ->
+                metrics.put(vertexName + item.getSubtask(), item.getRatio() * 100 )
+            );
         }
 
         return metrics;

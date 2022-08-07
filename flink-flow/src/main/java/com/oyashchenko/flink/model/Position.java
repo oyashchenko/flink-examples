@@ -10,6 +10,10 @@ public class Position {
     private final String ccy;
     private final Double fx;
 
+    private Double price;
+
+    private boolean isDeleted;
+
     private LocalDateTime eventTime;
 
     public Position(Integer secId, Integer legalEntityId, Double quantity, String ccy, Double fx) {
@@ -20,6 +24,22 @@ public class Position {
         this.fx = fx;
         this.eventTime = LocalDateTime.now();
 
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public Double getPrice() {
+        return price;
+    }
+
+    public void setPrice(Double price) {
+        this.price = price;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 
     public Integer getSecId() {

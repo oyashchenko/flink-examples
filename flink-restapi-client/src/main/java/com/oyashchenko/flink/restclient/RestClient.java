@@ -1,6 +1,8 @@
 package com.oyashchenko.flink.restclient;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.oyashchenko.flink.restclient.kafka.BackPressureEventsProducer;
+import com.oyashchenko.flink.restclient.kafka.BackpressureMetric;
 import com.oyashchenko.flink.restclient.response.*;
 import okhttp3.*;
 
@@ -17,56 +19,69 @@ public class RestClient {
     private static final String FLINK_URL_PROPERTY = "flinkUrl";
     public static final String METRICS_URL = "metricsUrl";
     private static final String JOB_ID_TEMPLATE = "{:jobId}";
-    private static final String VERTEX_ID_TEMPLATE="{:vertexId}";
+    private static final String VERTEX_ID_TEMPLATE = "{:vertexId}";
 
     //Track metrics every 5 sec
-    private static final long REPEAT_INTERVAL = 5000;
+    private static final long REPEAT_INTERVAL = 10000;
+    private static final String BACK_PRESSURE_EVENT_TOPIC = "backPressureEventTopic";
     private Properties properties;
     private OkHttpClient client = new OkHttpClient();
 
-
+    private BackPressureEventsProducer backPressureEventsProducer;
 
 
     public static void main(String[] args) {
         try {
             RestClient restClient = new RestClient();
-            String jobId = restClient.getRunningJobId();
-            List<Vertex> vertexList = restClient.getVertexDetails(jobId);
-            List<BackPressure> subtasks = new ArrayList<>();
-            while (true) {
-                vertexList.forEach(vertex -> {
-                    System.out.println("Getting metrics for " + vertex.getName() + ":" + vertex.getId());
-                    BackPressure backPressureMetrics = restClient.getBackPressureSubtasksMetrics(jobId, vertex.getId());
-                    backPressureMetrics.setVertexName(vertex.getName());
-                    backPressureMetrics.setVertexId(vertex.getId());
-                    subtasks.add(backPressureMetrics);
-                });
-
-                subtasks.stream().forEach(
-                        backPressure -> {
-                            Map<String, Double> subtaskUnderBackPressure = backPressure.getBackPressedSubtasks();
-                            if (subtaskUnderBackPressure != null && !subtaskUnderBackPressure.isEmpty()) {
-                                subtaskUnderBackPressure.entrySet().stream().forEach(
-                                        task -> System.out.println(task.getKey() + " :backpressure % :" + task.getValue())
-                                );
-                            }
-                        }
-                );
-                try {
-                    Thread.sleep(REPEAT_INTERVAL);//20 sek
-                } catch (InterruptedException e) {
-                    System.out.println("Interrupted :" + e.getMessage());
-                    break;
-                }
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            restClient.run();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
+
     }
+
 
     public RestClient() throws IOException {
         loadProperties();
+        backPressureEventsProducer = new BackPressureEventsProducer(properties);
 
+    }
+
+    public void run() {
+        String jobId = getRunningJobId();
+        List<Vertex> vertexList = getVertexDetails(jobId);
+        List<BackPressure> subtasks = new ArrayList<>();
+        while (true) {
+            vertexList.forEach(vertex -> {
+                System.out.println("Getting metrics for " + vertex.getName() + ":" + vertex.getId());
+                BackPressure backPressureMetrics = getBackPressureSubtasksMetrics(jobId, vertex.getId());
+                backPressureMetrics.setVertexName(vertex.getName());
+                backPressureMetrics.setVertexId(vertex.getId());
+                subtasks.add(backPressureMetrics);
+            });
+
+            subtasks.stream().forEach(
+                    backPressure -> {
+                        Map<String, Double> subtaskUnderBackPressure = backPressure.getBackPressedSubtasks();
+                        if (subtaskUnderBackPressure != null && !subtaskUnderBackPressure.isEmpty()) {
+                            subtaskUnderBackPressure.entrySet().stream().forEach(
+                                    task -> {
+                                        backPressureEventsProducer.publish(BACK_PRESSURE_EVENT_TOPIC, new BackpressureMetric(
+                                                task.getKey(), false, task.getValue()
+                                        ));
+                                        System.out.println(task.getKey() + " :backpressure % :" + task.getValue());
+                                    }
+                            );
+                        }
+                    }
+            );
+            try {
+                Thread.sleep(REPEAT_INTERVAL);//20 sek
+            } catch (InterruptedException e) {
+                System.out.println("Interrupted :" + e.getMessage());
+                break;
+            }
+        }
     }
 
     public String getRunningJobId() {
@@ -77,7 +92,7 @@ public class RestClient {
             ).build()).execute();
 
             if (res.isSuccessful()) {
-                ///System.out.println("Responce" + res.body().string());
+                ///System.out.println("Response" + res.body().string());
                 JobsResponse jobs = new ObjectMapper().readValue(res.body().string(),
                         /*new TypeReference<List<Job>>(){}*/ JobsResponse.class);
                 Optional<Job> running = jobs.getJobs().stream().filter(item -> "RUNNING".equalsIgnoreCase(item.getStatus())).findFirst();
@@ -93,7 +108,7 @@ public class RestClient {
 
     private void loadProperties() throws IOException {
         properties = new Properties();
-        if (System.getProperty(PROPERTY_PATH_OPTION) != null ) {
+        if (System.getProperty(PROPERTY_PATH_OPTION) != null) {
             Path path = Paths.get(System.getProperty(PROPERTY_PATH_OPTION) + PROPERTY_FILE_NAME);
             properties.load(new FileInputStream(path.toFile()));
         } else {
@@ -123,7 +138,7 @@ public class RestClient {
 
     private BackPressure getBackPressureSubtasksMetrics(String jobId, String vertexId) {
         HttpUrl req = HttpUrl.parse(properties.getProperty(FLINK_URL_PROPERTY) +
-            properties.getProperty("vertexes").replace(JOB_ID_TEMPLATE,jobId).replace(VERTEX_ID_TEMPLATE, vertexId)
+                properties.getProperty("vertexes").replace(JOB_ID_TEMPLATE, jobId).replace(VERTEX_ID_TEMPLATE, vertexId)
         );
 
         try {

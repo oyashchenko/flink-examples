@@ -47,4 +47,8 @@ public class PriceTick  implements Serializable {
                 ", eventTime=" + eventTime +
                 '}';
     }
+
+    public LocalDateTime getEventTime() {
+        return eventTime;
+    }
 }

@@ -36,7 +36,7 @@ public class PriceSource implements SourceFunction<PriceTick> {
             }
 
             if (diffFromStart >= 600000) {//5 min {
-                Thread.sleep(5);
+                Thread.sleep(10);
             }
             long volume = eventsPerSec/(sec==0?1:sec);
 
