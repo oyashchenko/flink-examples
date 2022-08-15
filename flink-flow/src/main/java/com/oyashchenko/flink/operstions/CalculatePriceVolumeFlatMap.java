@@ -1,11 +1,7 @@
 package com.oyashchenko.flink.operstions;
 
 import com.oyashchenko.flink.model.PriceTick;
-import com.oyashchenko.flink.source.BackPressureMetricsStoreFunction;
-import com.oyashchenko.flink.workflow.PnlCalculation;
-import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
-import org.apache.flink.api.common.state.MapState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.util.Collector;
 import org.slf4j.Logger;
@@ -27,23 +23,13 @@ public class CalculatePriceVolumeFlatMap extends RichFlatMapFunction<PriceTick, 
         @Override
         public void flatMap(PriceTick priceTick, Collector<PriceTick> collector) throws Exception {
 
-            try {
-                MapState<String, Double> state = getRuntimeContext().getMapState(descriptor);
-                LOG.info("getRuntimeContext().getTaskNameWithSubtasks() :{} state {}",
-
-                        getRuntimeContext().getTaskNameWithSubtasks(),
-                        state.keys());
-            } catch (Exception e) {
-                System.out.println("ERROR in " + getRuntimeContext().getTaskNameWithSubtasks() +" : " +e.getMessage());;
-            }
-
             long current = System.currentTimeMillis();
             long diff = current - eventsSnap;
             long diffInSec = TimeUnit.MILLISECONDS.toSeconds(diff);
             synchronized (counter) {
                // if (eventsPerSec.get() <= 60) {
                 collector.collect(priceTick);
-                LOG.info("Added price tick : {} :{} counter : {}", priceTick.getRic(), eventsPerSec.get(), counter.get() );
+                //LOG.info("Added price tick : {} :{} counter : {}", priceTick.getRic(), eventsPerSec.get(), counter.get() );
                 counter.incrementAndGet();
                 //} else {
                 ///    LOG.info("Ignore price tick :", priceTick.getRic());
@@ -53,12 +39,12 @@ public class CalculatePriceVolumeFlatMap extends RichFlatMapFunction<PriceTick, 
             synchronized (counter) {
                 if (diffInSec >= PER_TIME) {
                     eventsPerSec.getAndSet(counter.get() / diffInSec);
-                    LOG.info("EVENTS:Current event time : {}, count: {} , Diff time in sec : {} , events per sec: {}",
-                            current, counter.get(), diffInSec, eventsPerSec);
+                    //LOG.info("EVENTS:Current event time : {}, count: {} , Diff time in sec : {} , events per sec: {}",
+                    //        current, counter.get(), diffInSec, eventsPerSec);
                     counter.getAndSet(0);
 
                     eventsSnap = current;
-                    LOG.info("Updated counter : {}, eventSnap : {}", counter.get(), eventsSnap);
+                  //  LOG.info("Updated counter : {}, eventSnap : {}", counter.get(), eventsSnap);
                 } else {
 
                 }

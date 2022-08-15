@@ -62,11 +62,16 @@ public class Position {
         return fx;
     }
 
+    public LocalDateTime getEventTime() {
+        return eventTime;
+    }
+
     @Override
     public String toString() {
         return "Position{" +
                 "secId=" + secId +
-                ", legalEntityId=" + legalEntityId +
+                "price=" + price +
+                 ", legalEntityId=" + legalEntityId +
                 ", quantity=" + quantity +
                 ", ccy='" + ccy + '\'' +
                 ", fx=" + fx +

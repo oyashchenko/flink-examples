@@ -1,4 +1,4 @@
-package com.oyashchenko.flink.source;
+package com.oyashchenko.flink.operstions;
 
 import com.oyashchenko.flink.model.BackpressureMetric;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
@@ -29,8 +29,8 @@ public class BackPressureMetricsStoreFunction extends RichFlatMapFunction<Backpr
 
     public static MapStateDescriptor<String, BackpressureMetric> getMetricsState() {
         return  new MapStateDescriptor<String, BackpressureMetric>(
-                        "backPressureMetrics", TypeInformation.of(String.class),
-                        TypeInformation.of(new TypeHint<BackpressureMetric>() {
-                        }));
+            "backPressureMetrics", TypeInformation.of(String.class),
+            TypeInformation.of(new TypeHint<BackpressureMetric>() {})
+        );
     }
 }

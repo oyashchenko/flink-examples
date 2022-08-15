@@ -20,7 +20,7 @@ public class PositionSource implements SourceFunction<Position> {
             sourceContext.collect(
                 new Position(secId,legalEntityId,secId * 10d, "USD", 1d)
             );
-            Thread.sleep(5);
+            Thread.sleep(20);
         }
     }
 

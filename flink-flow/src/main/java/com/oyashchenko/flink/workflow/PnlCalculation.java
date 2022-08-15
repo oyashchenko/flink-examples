@@ -1,20 +1,16 @@
 package com.oyashchenko.flink.workflow;
 
-import com.oyashchenko.flink.Utils;
 import com.oyashchenko.flink.model.BackpressureMetric;
 import com.oyashchenko.flink.model.Position;
-import com.oyashchenko.flink.operstions.CalculatePriceVolumeFlatMap;
-import com.oyashchenko.flink.operstions.BroadcastPriceBackPressureMetricsProcessFunction;
+import com.oyashchenko.flink.model.PositionDeleteEvent;
+import com.oyashchenko.flink.operstions.*;
 import com.oyashchenko.flink.sink.PriceSink;
 import com.oyashchenko.flink.model.PriceTick;
 import com.oyashchenko.flink.sink.PositionSink;
-import com.oyashchenko.flink.source.BackPressureMetricsStoreFunction;
-import com.oyashchenko.flink.source.BackpressureMetricsDeserializer;
-import com.oyashchenko.flink.source.PriceSource;
+import com.oyashchenko.flink.source.*;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.api.common.functions.RichFlatMapFunction;
-import org.apache.flink.api.common.state.MapStateDescriptor;
+import org.apache.flink.api.common.state.*;
 import org.apache.flink.configuration.Configuration;
 
 import org.apache.flink.connector.kafka.source.KafkaSource;
@@ -24,7 +20,6 @@ import org.apache.flink.streaming.api.datastream.BroadcastStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.util.Collector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,62 +44,48 @@ public class PnlCalculation {
         );
 
         env.setParallelism(3);
-        DataStreamSource<Position> positionDataSource = env.fromCollection(Utils.generatePosition());
+        //Data sources
+        DataStreamSource<Position> positionDataSource = env.addSource(new PositionSource(),"Position Source");
         DataStreamSource<PriceTick> priceTickDataSource = env.addSource(new PriceSource(),"Price ticks");
         DataStreamSource<BackpressureMetric> backpressureMetricsSource = env.fromSource(metricsSource(), WatermarkStrategy.noWatermarks(), "Metrics");
+        DataStreamSource<PositionDeleteEvent> positionDeleteSource = env.addSource(new PositionDeleteEventSource(), "Delete Position");
 
         MapStateDescriptor<String, BackpressureMetric> stateOfBackPressure = BackPressureMetricsStoreFunction.getMetricsState();
-
         BroadcastStream<BackpressureMetric> backPressureStreamMetrics = backpressureMetricsSource
-                //.keyBy(backpressureMetricAvro -> backpressureMetricAvro.getTaskName()).
-          .broadcast(stateOfBackPressure);
+            //.keyBy(backpressureMetricAvro -> backpressureMetricAvro.getTaskName()).
+            .broadcast(stateOfBackPressure);
 
-
-
-        //flatMap(new BackPressureMetricsStoreFunction()).print().name("Metrics Results");
-
-
+        //Sinks
         PriceSink priceCache = new PriceSink();
-        positionDataSource.flatMap(
-                new RichFlatMapFunction<Position, String>() {
-                    @Override
-                    public void open(Configuration parameters) throws Exception {
-
-                    }
-                    @Override
-                    public void flatMap(Position position, Collector<String> collector) throws Exception {
-                        Map<String, String> allVariables = getRuntimeContext().getMetricGroup().getIOMetricGroup().getAllVariables();
-
-                        allVariables.entrySet().stream().forEach(
-                                item -> {
-                                    collector.collect(item.getKey());
-                                    System.out.println("Key:" + item.getKey() + " Value:" +item.getValue() );
-                                }
-                        );
-
-                    }
-                }
-        );
+        PositionSink positionSink = new PositionSink();
 
         SingleOutputStreamOperator<PriceTick> priceCountEventsStream  = priceTickDataSource.
         keyBy(priceTick -> priceTick.getSecId())
-            .flatMap(new CalculatePriceVolumeFlatMap()).name("Price logic").setParallelism(2);
+            .flatMap(new CalculatePriceVolumeFlatMap()).name("Price logic").setParallelism(3);
 
 
-        SingleOutputStreamOperator<PriceTick> price_throttle = priceCountEventsStream.connect(backPressureStreamMetrics)
+        SingleOutputStreamOperator<PriceTick> priceThrottle = priceCountEventsStream.connect(backPressureStreamMetrics)
                 .process(new BroadcastPriceBackPressureMetricsProcessFunction()).name("Price Throttle").setParallelism(3);
 
 
-        price_throttle.addSink(priceCache).name("PriceSink").setParallelism(3);
+        priceThrottle.addSink(priceCache).name("PriceSink").setParallelism(4);
+
+        SingleOutputStreamOperator<Position> positionsWithDeleteEventJoin = positionDataSource
+            .keyBy(position -> position.getLegalEntityId())
+            .connect(positionDeleteSource)
+                .keyBy(position -> position.getLegalEntityId(), positionDeleteEvent -> positionDeleteEvent.getLegalEntityId())
+                .process(new PositionDeleteProcessFunction()).name("PositionDeleteUpdateFlag");
 
 
+        SingleOutputStreamOperator<Position> processPositionPriceJoin =
+                priceThrottle.keyBy(priceTick -> priceTick.getSecId())
+                .connect(positionsWithDeleteEventJoin)
+                        .keyBy(sec -> sec.getSecId(), position -> position.getSecId())
+                        .process(new PositionPriceCoProcessFunction()).name("PositionPriceJoin");
 
 
-
-
-        PositionSink positionSink = new PositionSink();
         logger.info("Started task");
-        positionDataSource.addSink(positionSink).name("PositionSink");
+        processPositionPriceJoin.addSink(positionSink).name("PositionSink");
        // priceTickDataSource.addSink(priceCache).name("PriceSink");
         JobExecutionResult jobResults = env.execute("Backpressure ");
 

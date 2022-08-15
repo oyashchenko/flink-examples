@@ -2,7 +2,6 @@ package com.oyashchenko.flink.operstions;
 
 import com.oyashchenko.flink.model.BackpressureMetric;
 import com.oyashchenko.flink.model.PriceTick;
-import com.oyashchenko.flink.source.BackPressureMetricsStoreFunction;
 import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.streaming.api.functions.co.BroadcastProcessFunction;
 import org.apache.flink.streaming.api.functions.co.KeyedBroadcastProcessFunction;
@@ -36,7 +35,7 @@ public class BroadcastPriceBackPressureMetricsProcessFunction extends BroadcastP
         Iterable<Map.Entry<String, BackpressureMetric>> broadcastState = readOnlyContext.getBroadcastState(descriptor).immutableEntries();
         if (!isUnderBackPressurePrice(broadcastState)) {
             collector.collect(priceTick);
-            LOG.info("Collected price" + priceTick);
+           // LOG.info("Collected price" + priceTick);
         } else {
             LOG.info("Excluded due to under backpressure : " + priceTick);
         }
