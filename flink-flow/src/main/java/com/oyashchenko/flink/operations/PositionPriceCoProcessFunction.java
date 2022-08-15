@@ -1,4 +1,4 @@
-package com.oyashchenko.flink.operstions;
+package com.oyashchenko.flink.operations;
 
 import com.oyashchenko.flink.model.Position;
 import com.oyashchenko.flink.model.PriceTick;

@@ -3,7 +3,7 @@ package com.oyashchenko.flink.workflow;
 import com.oyashchenko.flink.model.BackpressureMetric;
 import com.oyashchenko.flink.model.Position;
 import com.oyashchenko.flink.model.PositionDeleteEvent;
-import com.oyashchenko.flink.operstions.*;
+import com.oyashchenko.flink.operations.*;
 import com.oyashchenko.flink.sink.PriceSink;
 import com.oyashchenko.flink.model.PriceTick;
 import com.oyashchenko.flink.sink.PositionSink;

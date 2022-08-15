@@ -1,4 +1,4 @@
-package com.oyashchenko.flink.operstions;
+package com.oyashchenko.flink.operations;
 
 import com.oyashchenko.flink.model.Position;
 import com.oyashchenko.flink.model.PositionDeleteEvent;
@@ -11,8 +11,6 @@ import org.apache.flink.streaming.api.functions.co.CoProcessFunction;
 import org.apache.flink.util.Collector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.time.LocalDateTime;
 
 public class PositionDeleteProcessFunction extends CoProcessFunction<Position, PositionDeleteEvent, Position> {
     private static final Logger LOG = LoggerFactory.getLogger(PositionDeleteProcessFunction.class);

@@ -11,8 +11,10 @@ public class PositionSink implements SinkFunction<Position> {
 
     @Override
     public void invoke(Position value, Context context) throws Exception {
-        Thread.sleep(10000);//10sec
-        System.out.println("Position:" + value);
+        //Thread.sleep(10000);//10sec
+        System.out.println("Position Sink:" + value);
 
     }
+
+
 }
