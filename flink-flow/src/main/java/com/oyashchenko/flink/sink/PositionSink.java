@@ -1,11 +1,14 @@
 package com.oyashchenko.flink.sink;
 
 import com.oyashchenko.flink.model.Position;
+import org.apache.flink.api.common.functions.AbstractRichFunction;
+import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PositionSink implements SinkFunction<Position> {
+public class PositionSink extends RichSinkFunction<Position>  {
+
     private static final Logger LOG = LoggerFactory.getLogger(PositionSink.class);
 
 
@@ -15,6 +18,4 @@ public class PositionSink implements SinkFunction<Position> {
         System.out.println("Position Sink:" + value);
 
     }
-
-
 }

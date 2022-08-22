@@ -1,0 +1,77 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+       http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd">
+    <!--
+        Alter configuration below as needed.
+    -->
+    <bean id="cacheCfg" class="org.apache.ignite.configuration.IgniteConfiguration">
+        <property name="clientMode" value="true"/>
+        <property name="localHost" value="127.0.0.1"/>
+
+
+        <property name="cacheConfiguration">
+            <list>
+                <bean class="org.apache.ignite.configuration.CacheConfiguration">
+
+                    <property name="name" value="Position"/>
+                    <property name="sqlSchema" value="PUBLIC"/>
+
+                    <property name="cacheMode" value="PARTITIONED"/>
+
+                    <property name="atomicityMode" value="ATOMIC"/>
+
+                    <property name="backups" value="0"/>
+
+                    <property name="statisticsEnabled" value="true"/>
+
+                    <property name="indexedTypes">
+                        <array value-type="java.lang.Class">
+                            <value>java.lang.String</value>
+                            <value>com.oyashchenko.flink.model.Position</value>
+                        </array>
+                    </property>
+
+                </bean>
+                <bean class="org.apache.ignite.configuration.CacheConfiguration">
+
+                    <property name="name" value="Portfolio"/>
+                    <property name="sqlSchema" value="PUBLIC"/>
+
+                    <property name="cacheMode" value="PARTITIONED"/>
+
+                    <property name="atomicityMode" value="ATOMIC"/>
+
+                    <property name="backups" value="0"/>
+
+                    <property name="statisticsEnabled" value="true"/>
+
+                    <property name="indexedTypes">
+                        <array value-type="java.lang.Class">
+                            <value>java.lang.Integer</value>
+                            <value>com.oyashchenko.flink.model.Portfolio</value>
+                        </array>
+                    </property>
+
+                </bean>
+            </list>
+        </property>
+
+        <!-- Explicitly configure TCP discovery SPI to provide list of initial nodes. -->
+        <property name="discoverySpi">
+            <bean class="org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi">
+                <property name="ipFinder">
+                    <bean class="org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder">
+                        <property name="addresses">
+                            <list>
+                                <value>127.0.0.1:47500</value>
+                            </list>
+                        </property>
+                    </bean>
+                </property>
+            </bean>
+        </property>
+
+    </bean>
+</beans>

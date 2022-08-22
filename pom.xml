@@ -31,6 +31,7 @@ under the License.
     <module>flink-reporter</module>
     <module>flink-flow</module>
     <module>flink-restapi-client</module>
+    <module>ignite</module>
 </modules>
 
     <build>

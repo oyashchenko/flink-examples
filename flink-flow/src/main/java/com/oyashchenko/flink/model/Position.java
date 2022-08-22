@@ -1,20 +1,34 @@
 package com.oyashchenko.flink.model;
 
+import org.apache.ignite.cache.query.annotations.QuerySqlField;
+
 import java.time.LocalDateTime;
 import java.util.Objects;
 
 public class Position {
-    private final Integer secId;
-    private final Integer legalEntityId;
-    private final Double quantity;
-    private final String ccy;
-    private final Double fx;
 
+    @QuerySqlField(name = "secId")
+    private final Integer secId;
+    @QuerySqlField(name = "legalEntityId")
+    private final Integer legalEntityId;
+    @QuerySqlField(name = "quantity")
+    private final Double quantity;
+    @QuerySqlField(name = "ccy")
+    private final String ccy;
+    @QuerySqlField(name = "fx")
+    private final Double fx;
+    @QuerySqlField(name = "price")
     private Double price;
 
+    @QuerySqlField(name = "pnl")
+    private Double pnl;
+
+    @QuerySqlField(name = "isDeleted")
     private boolean isDeleted;
 
-    private LocalDateTime eventTime;
+    @QuerySqlField(name = "eventTime")
+    private final LocalDateTime eventTime;
+
 
     public Position(Integer secId, Integer legalEntityId, Double quantity, String ccy, Double fx) {
         this.secId = secId;
@@ -66,6 +80,10 @@ public class Position {
         return eventTime;
     }
 
+    public String getKey(){
+        return this.legalEntityId + ":" + this.secId;
+    }
+
     @Override
     public String toString() {
         return "Position{" +
@@ -90,5 +108,13 @@ public class Position {
     @Override
     public int hashCode() {
         return Objects.hash(secId, legalEntityId, quantity, ccy, fx);
+    }
+
+    public void setPnl(Double pnl) {
+        this.pnl = pnl;
+    }
+
+    public Double getPnl() {
+        return pnl;
     }
 }

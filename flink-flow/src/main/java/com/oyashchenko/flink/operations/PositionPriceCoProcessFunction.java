@@ -35,17 +35,16 @@ public class PositionPriceCoProcessFunction extends CoProcessFunction<PriceTick,
                             pos -> {
                                 if (!pos.isDeleted()) {
                                     pos.setPrice(priceTick.getPrice());
+                                    pos.setPnl(priceTick.getPrice()*pos.getFx()* pos.getQuantity());
                                     collector.collect(pos);
                                 } else {
+                                    pos.setPnl(0d);
                                    LOG.info("REMOVED POSITION: {}-{}, ignore price tick: {} ", pos.getLegalEntityId(), pos.getSecId(), priceTick );
                                }
                             }
 
                     )
             );
-        } else {
-
-            //nothing to do
         }
     }
 
@@ -53,10 +52,11 @@ public class PositionPriceCoProcessFunction extends CoProcessFunction<PriceTick,
     public void processElement2(Position position, CoProcessFunction<PriceTick, Position, Position>.Context context, Collector<Position> collector) throws Exception {
         if (!position.isDeleted()) {
             position.setPrice(latestSecurityPrice.value() == null ? 0d : latestSecurityPrice.value().getField(1));
+            position.setPnl(position.getPrice()* position.getFx()*position.getQuantity());
             Integer secId = position.getSecId();
             List<Position> positions = securityPositions.get(secId);
             if (positions == null ) {
-                List positionsSec = new ArrayList();
+                List<Position> positionsSec = new ArrayList();
                 positionsSec.add(position);
                 securityPositions.put(secId, positionsSec);
             } else {
@@ -82,14 +82,16 @@ public class PositionPriceCoProcessFunction extends CoProcessFunction<PriceTick,
                 LOG.info("Positions size: {}, Diff le number {}",positions.size(), positions.stream().map(
                         position1 -> position1.getLegalEntityId()).count());
                 positions.remove(position);
+                position.setPnl(0d);
                 LOG.info("Positions size after: {}, Diff le number {}",positions.size(), positions.stream().map(
                         position1 -> position1.getLegalEntityId()).count());
+                collector.collect(position);//update flag in cache
             }
         }
     }
 
     @Override
-    public void open(Configuration parameters) throws Exception {
+    public void open(Configuration parameters) {
         latestSecurityPrice = this.getRuntimeContext().getState(this.getValueDescriptor());
         securityPositions = this.getRuntimeContext().getMapState(this.getPositionsDescriptor());
     }
@@ -97,10 +99,10 @@ public class PositionPriceCoProcessFunction extends CoProcessFunction<PriceTick,
     private ValueStateDescriptor<Tuple2<LocalDateTime, Double>> getValueDescriptor() {
         return new ValueStateDescriptor<Tuple2<LocalDateTime, Double>>("latestSecPrice",
             TypeInformation.of(new TypeHint<Tuple2<LocalDateTime, Double>>() {}));
-        }
+    }
 
-        private MapStateDescriptor<Integer,List<Position>> getPositionsDescriptor() {
-            return new MapStateDescriptor<Integer, List<Position>>("leSecPositions", TypeInformation.of(Integer.class), TypeInformation.of(new TypeHint<List<Position>>() {}));
-        }
+    private MapStateDescriptor<Integer,List<Position>> getPositionsDescriptor() {
+        return new MapStateDescriptor<Integer, List<Position>>("leSecPositions", TypeInformation.of(Integer.class), TypeInformation.of(new TypeHint<List<Position>>() {}));
+    }
 
 }

@@ -1,15 +1,12 @@
 package com.oyashchenko.flink.workflow;
 
-import com.oyashchenko.flink.model.BackpressureMetric;
-import com.oyashchenko.flink.model.Position;
-import com.oyashchenko.flink.model.PositionDeleteEvent;
+import com.oyashchenko.flink.model.*;
 import com.oyashchenko.flink.operations.*;
-import com.oyashchenko.flink.sink.PriceSink;
-import com.oyashchenko.flink.model.PriceTick;
-import com.oyashchenko.flink.sink.PositionSink;
+import com.oyashchenko.flink.sink.SinkFactory;
 import com.oyashchenko.flink.source.*;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.api.common.functions.AggregateFunction;
 import org.apache.flink.api.common.state.*;
 import org.apache.flink.configuration.Configuration;
 
@@ -19,10 +16,16 @@ import org.apache.flink.connector.kafka.source.reader.deserializer.KafkaRecordDe
 import org.apache.flink.streaming.api.datastream.BroadcastStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
+import org.apache.flink.streaming.api.datastream.WindowedStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
+import org.apache.flink.streaming.api.windowing.assigners.GlobalWindows;
+import org.apache.flink.streaming.api.windowing.windows.Window;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,7 +33,7 @@ public class PnlCalculation {
     public static void main(String[] args) throws Exception {
         Logger logger = LoggerFactory.getLogger(PnlCalculation.class.getName());
         // set up the execution environment
-        Map<String, String> localSettings = new HashMap();
+        Map<String, String> localSettings = new HashMap<String, String>();
       //  localSettings.put("metrics.reporter.myReporter.factory.class", "org.apache.flink.metrics.own.LocalStorageReporterFactory");
       //  localSettings.put("metrics.reporter.myReporter.interval","10 SECONDS");
 
@@ -49,6 +52,10 @@ public class PnlCalculation {
         DataStreamSource<PriceTick> priceTickDataSource = env.addSource(new PriceSource(),"Price ticks");
         DataStreamSource<BackpressureMetric> backpressureMetricsSource = env.fromSource(metricsSource(), WatermarkStrategy.noWatermarks(), "Metrics");
         DataStreamSource<PositionDeleteEvent> positionDeleteSource = env.addSource(new PositionDeleteEventSource(), "Delete Position");
+        DataStreamSource<Portfolio> portfolioDataSource = env.fromCollection(
+            Arrays.asList(new Portfolio(1), new Portfolio(2))
+        );
+
 
         MapStateDescriptor<String, BackpressureMetric> stateOfBackPressure = BackPressureMetricsStoreFunction.getMetricsState();
         BroadcastStream<BackpressureMetric> backPressureStreamMetrics = backpressureMetricsSource
@@ -56,13 +63,13 @@ public class PnlCalculation {
             .broadcast(stateOfBackPressure);
 
         //Sinks
-        PriceSink priceCache = new PriceSink();
-        PositionSink positionSink = new PositionSink();
+        RichSinkFunction<PriceTick> priceCache = SinkFactory.getSink(PriceTick.class);
+        RichSinkFunction<Position> positionSink = SinkFactory.getSink(Position.class);
+        RichSinkFunction<Portfolio> portfolioSink = SinkFactory.getSink(Portfolio.class);
 
-        SingleOutputStreamOperator<PriceTick> priceCountEventsStream  = priceTickDataSource.
-        keyBy(priceTick -> priceTick.getSecId())
+        SingleOutputStreamOperator<PriceTick> priceCountEventsStream  = priceTickDataSource
+            .keyBy(PriceTick::getSecId)
             .flatMap(new CalculatePriceVolumeFlatMap()).name("Price logic").setParallelism(3);
-
 
         SingleOutputStreamOperator<PriceTick> priceThrottle = priceCountEventsStream.connect(backPressureStreamMetrics)
                 .process(new BroadcastPriceBackPressureMetricsProcessFunction()).name("Price Throttle").setParallelism(3);
@@ -71,21 +78,27 @@ public class PnlCalculation {
         priceThrottle.addSink(priceCache).name("PriceSink").setParallelism(4);
 
         SingleOutputStreamOperator<Position> positionsWithDeleteEventJoin = positionDataSource
-            .keyBy(position -> position.getLegalEntityId())
+            .keyBy(Position::getLegalEntityId)
             .connect(positionDeleteSource)
-                .keyBy(position -> position.getLegalEntityId(), positionDeleteEvent -> positionDeleteEvent.getLegalEntityId())
+                .keyBy(Position::getLegalEntityId, PositionDeleteEvent::getLegalEntityId)
                 .process(new PositionDeleteProcessFunction()).name("PositionDeleteUpdateFlag");
 
 
         SingleOutputStreamOperator<Position> processPositionPriceJoin =
-                priceThrottle.keyBy(priceTick -> priceTick.getSecId())
+                priceThrottle.keyBy(PriceTick::getSecId)
                 .connect(positionsWithDeleteEventJoin)
-                        .keyBy(sec -> sec.getSecId(), position -> position.getSecId())
+                        .keyBy(PriceTick::getSecId, Position::getSecId)
                         .process(new PositionPriceCoProcessFunction()).name("PositionPriceJoin");
 
+        //join positions and portfolio
+        SingleOutputStreamOperator<Portfolio> portfolioPositionJoin = portfolioDataSource
+                .keyBy(Portfolio::getLegalEntityId).connect(processPositionPriceJoin).keyBy(
+                        Portfolio::getLegalEntityId, Position::getLegalEntityId
+        ).process(new PortfolioPositionsPriceJoin()).name("PortfolioPositionJoin").setParallelism(4);
 
         logger.info("Started task");
         processPositionPriceJoin.addSink(positionSink).name("PositionSink");
+        portfolioPositionJoin.addSink(portfolioSink).name("PortfolioSink");
        // priceTickDataSource.addSink(priceCache).name("PriceSink");
         JobExecutionResult jobResults = env.execute("Backpressure ");
 
