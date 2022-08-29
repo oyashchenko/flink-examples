@@ -20,14 +20,16 @@ import org.apache.flink.streaming.api.datastream.WindowedStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.flink.streaming.api.windowing.assigners.GlobalWindows;
+import org.apache.flink.streaming.api.windowing.evictors.Evictor;
+import org.apache.flink.streaming.api.windowing.triggers.Trigger;
+import org.apache.flink.streaming.api.windowing.triggers.TriggerResult;
+import org.apache.flink.streaming.api.windowing.windows.GlobalWindow;
 import org.apache.flink.streaming.api.windowing.windows.Window;
+import org.apache.flink.streaming.runtime.operators.windowing.TimestampedValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class PnlCalculation {
     public static void main(String[] args) throws Exception {
@@ -50,7 +52,7 @@ public class PnlCalculation {
         //Data sources
         DataStreamSource<Position> positionDataSource = env.addSource(new PositionSource(),"Position Source");
         DataStreamSource<PriceTick> priceTickDataSource = env.addSource(new PriceSource(),"Price ticks");
-        DataStreamSource<BackpressureMetric> backpressureMetricsSource = env.fromSource(metricsSource(), WatermarkStrategy.noWatermarks(), "Metrics");
+        DataStreamSource<BackpressureMetric> backpressureMetricsSource = env.fromSource(metricsSource(), WatermarkStrategy.noWatermarks(), "Metrics").setParallelism(1);
         DataStreamSource<PositionDeleteEvent> positionDeleteSource = env.addSource(new PositionDeleteEventSource(), "Delete Position");
         DataStreamSource<Portfolio> portfolioDataSource = env.fromCollection(
             Arrays.asList(new Portfolio(1), new Portfolio(2))
@@ -75,7 +77,7 @@ public class PnlCalculation {
                 .process(new BroadcastPriceBackPressureMetricsProcessFunction()).name("Price Throttle").setParallelism(3);
 
 
-        priceThrottle.addSink(priceCache).name("PriceSink").setParallelism(4);
+        priceThrottle.keyBy(PriceTick::getSecId).addSink(priceCache).name("PriceSink").setParallelism(3);
 
         SingleOutputStreamOperator<Position> positionsWithDeleteEventJoin = positionDataSource
             .keyBy(Position::getLegalEntityId)
@@ -85,7 +87,7 @@ public class PnlCalculation {
 
 
         SingleOutputStreamOperator<Position> processPositionPriceJoin =
-                priceThrottle.keyBy(PriceTick::getSecId)
+            priceThrottle.keyBy(PriceTick::getSecId)
                 .connect(positionsWithDeleteEventJoin)
                         .keyBy(PriceTick::getSecId, Position::getSecId)
                         .process(new PositionPriceCoProcessFunction()).name("PositionPriceJoin");
@@ -95,6 +97,61 @@ public class PnlCalculation {
                 .keyBy(Portfolio::getLegalEntityId).connect(processPositionPriceJoin).keyBy(
                         Portfolio::getLegalEntityId, Position::getLegalEntityId
         ).process(new PortfolioPositionsPriceJoin()).name("PortfolioPositionJoin").setParallelism(4);
+
+        WindowedStream<Position, Integer, GlobalWindow> portfolioAllWindow = processPositionPriceJoin.keyBy(Position::getLegalEntityId)
+                .window(GlobalWindows.create());
+
+        portfolioAllWindow
+                .trigger(
+                        new Trigger<Position, GlobalWindow>() {
+                            @Override
+                            public TriggerResult onElement(Position position, long l, GlobalWindow globalWindow, TriggerContext triggerContext) throws Exception {
+                                return TriggerResult.FIRE;
+                            }
+
+                            @Override
+                            public TriggerResult onProcessingTime(long l, GlobalWindow globalWindow, TriggerContext triggerContext) throws Exception {
+                                return TriggerResult.CONTINUE;
+                            }
+
+                            @Override
+                            public TriggerResult onEventTime(long l, GlobalWindow globalWindow, TriggerContext triggerContext) throws Exception {
+                                return TriggerResult.CONTINUE;
+                            }
+
+                            @Override
+                            public void clear(GlobalWindow globalWindow, TriggerContext triggerContext) throws Exception {
+
+                            }
+                        }
+                ).evictor(
+                        new Evictor<Position, GlobalWindow>() {
+                            @Override
+                            public void evictBefore(Iterable<TimestampedValue<Position>> iterable, int i, GlobalWindow globalWindow, EvictorContext evictorContext) {
+                                for (Iterator<TimestampedValue<Position>> iterator = iterable.iterator(); iterator.hasNext(); ) {
+                                    TimestampedValue<Position> record = iterator.next();
+                                    if (record.getValue().isDeleted()) {
+                                    //    iterator.remove();
+
+                                        System.out.println("REMOVED from Trigger" + record.getValue());
+                                    }
+                                }
+
+                            }
+
+                            @Override
+                            public void evictAfter(Iterable<TimestampedValue<Position>> iterable, int i, GlobalWindow globalWindow, EvictorContext evictorContext) {
+
+                            }
+                        }
+                )
+                .aggregate( new PortfolioPositionAggregationWindowsFunction())
+                .name("PortfolioAllWindow");
+                //.addSink(portfolioSink).name("PortfolioSink");
+
+
+
+
 
         logger.info("Started task");
         processPositionPriceJoin.addSink(positionSink).name("PositionSink");

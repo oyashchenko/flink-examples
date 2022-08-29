@@ -28,6 +28,10 @@ public class Portfolio {
         this.createdOnTime = LocalDateTime.now();
     }
 
+    public Portfolio() {
+        this.createdOnTime = LocalDateTime.now();
+    }
+
     public Integer getLegalEntityId() {
         return legalEntityId;
     }
@@ -60,5 +64,9 @@ public class Portfolio {
 
     public void updateModificationDate() {
         modificationTime = LocalDateTime.now();
+    }
+
+    public LocalDateTime getModificationTime() {
+        return modificationTime;
     }
 }

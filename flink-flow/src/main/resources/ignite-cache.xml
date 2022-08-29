@@ -55,6 +55,37 @@
                     </property>
 
                 </bean>
+                <bean class="org.apache.ignite.configuration.CacheConfiguration">
+
+                    <property name="name" value="Price"/>
+
+                    <property name="sqlSchema" value="PUBLIC"/>
+
+                    <property name="cacheMode" value="PARTITIONED"/>
+
+                    <property name="atomicityMode" value="ATOMIC"/>
+
+                    <property name="backups" value="0"/>
+
+                    <property name="statisticsEnabled" value="false"/>
+
+                    <property name="indexedTypes">
+                        <array value-type="java.lang.Class">
+                            <value>java.lang.Integer</value>
+                            <value>com.oyashchenko.flink.model.PriceTick</value>
+                        </array>
+                    </property>
+                    <property name="key"
+                    <property name="fields">
+                        <map>
+                            <entry key="secId" value="java.lang.Integer"/>
+                            <entry key="ric" value="java.lang.String"/>
+                            <entry key="price" value="java.lang.Double"/>
+                            <entry key="ccy" value="java.lang.String"/>
+                        </map>
+                    </property>
+
+                </bean>
             </list>
         </property>
 
