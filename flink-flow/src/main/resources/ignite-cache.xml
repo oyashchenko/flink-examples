@@ -75,16 +75,24 @@
                             <value>com.oyashchenko.flink.model.PriceTick</value>
                         </array>
                     </property>
-                    <property name="key"
-                    <property name="fields">
-                        <map>
-                            <entry key="secId" value="java.lang.Integer"/>
-                            <entry key="ric" value="java.lang.String"/>
-                            <entry key="price" value="java.lang.Double"/>
-                            <entry key="ccy" value="java.lang.String"/>
-                        </map>
-                    </property>
+                    <!--<property name="queryEntities">
+                            <list>
+                                <bean class="org.apache.ignite.cache.QueryEntity">
+                                   <property name="keyType" value="java.lang.Integer"/>
 
+                                   <property name="keyFieldName" value="secId"/>
+
+                                   <property name="fields">
+                                    <map>
+                                        <entry key="secId" value="java.lang.Integer"/>
+                                        <entry key="ric" value="java.lang.String"/>
+                                        <entry key="price" value="java.lang.Double"/>
+                                        <entry key="ccy" value="java.lang.String"/>
+                                    </map>
+                                 </property>
+                                </bean>
+                            </list>
+                    </property>!-->
                 </bean>
             </list>
         </property>
