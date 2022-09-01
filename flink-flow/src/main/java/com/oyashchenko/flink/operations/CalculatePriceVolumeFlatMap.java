@@ -1,6 +1,6 @@
 package com.oyashchenko.flink.operations;
 
-import com.oyashchenko.flink.model.PriceTick;
+import com.oyashchenko.cache.model.PriceTick;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.util.Collector;
@@ -13,15 +13,15 @@ import java.util.concurrent.atomic.AtomicLong;
 public class CalculatePriceVolumeFlatMap extends RichFlatMapFunction<PriceTick, PriceTick> {
         private final Logger LOG = LoggerFactory.getLogger(CalculatePriceVolumeFlatMap.class.getName());
         private static final long PER_TIME = 1; //1
-        private AtomicLong counter = new AtomicLong(1);
-        private Long startTime = System.currentTimeMillis();
+        private final AtomicLong counter = new AtomicLong(1);
+        private final Long startTime = System.currentTimeMillis();
         private volatile long eventsSnap = startTime;
-        private  AtomicLong eventsPerSec = new AtomicLong(0);
+        private  final AtomicLong eventsPerSec = new AtomicLong(0);
 
-        private MapStateDescriptor descriptor = BackPressureMetricsStoreFunction.getMetricsState();
+        private final MapStateDescriptor descriptor = BackPressureMetricsStoreFunction.getMetricsState();
 
         @Override
-        public void flatMap(PriceTick priceTick, Collector<PriceTick> collector) throws Exception {
+        public void flatMap(PriceTick priceTick, Collector<PriceTick> collector) {
 
             long current = System.currentTimeMillis();
             long diff = current - eventsSnap;
@@ -45,8 +45,6 @@ public class CalculatePriceVolumeFlatMap extends RichFlatMapFunction<PriceTick, 
 
                     eventsSnap = current;
                   //  LOG.info("Updated counter : {}, eventSnap : {}", counter.get(), eventsSnap);
-                } else {
-
                 }
             }
 

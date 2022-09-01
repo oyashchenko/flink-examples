@@ -29,7 +29,7 @@
                     <property name="indexedTypes">
                         <array value-type="java.lang.Class">
                             <value>java.lang.String</value>
-                            <value>com.oyashchenko.flink.model.Position</value>
+                            <value>com.oyashchenko.cache.model.Position</value>
                         </array>
                     </property>
 
@@ -50,7 +50,7 @@
                     <property name="indexedTypes">
                         <array value-type="java.lang.Class">
                             <value>java.lang.Integer</value>
-                            <value>com.oyashchenko.flink.model.Portfolio</value>
+                            <value>com.oyashchenko.cache.model.Portfolio</value>
                         </array>
                     </property>
 
@@ -72,7 +72,7 @@
                     <property name="indexedTypes">
                         <array value-type="java.lang.Class">
                             <value>java.lang.Integer</value>
-                            <value>com.oyashchenko.flink.model.PriceTick</value>
+                            <value>com.oyashchenko.cache.model.PriceTick</value>
                         </array>
                     </property>
                     <!--<property name="queryEntities">

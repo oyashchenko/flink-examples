@@ -20,7 +20,7 @@ under the License.
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <artifactId>flink-examples</artifactId>
-        <groupId>com.oyshchenko</groupId>
+        <groupId>com.oyashchenko</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
     <artifactId>flink-restapi-metrics</artifactId>

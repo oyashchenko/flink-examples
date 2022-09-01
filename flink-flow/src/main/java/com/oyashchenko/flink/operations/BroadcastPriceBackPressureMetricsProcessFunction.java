@@ -1,7 +1,7 @@
 package com.oyashchenko.flink.operations;
 
 import com.oyashchenko.flink.model.BackpressureMetric;
-import com.oyashchenko.flink.model.PriceTick;
+import com.oyashchenko.cache.model.PriceTick;
 import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.streaming.api.functions.co.BroadcastProcessFunction;
 import org.apache.flink.streaming.api.functions.co.KeyedBroadcastProcessFunction;

@@ -1,20 +1,14 @@
 package com.oyashchenko.flink.operations;
 
-import com.oyashchenko.flink.model.Portfolio;
-import com.oyashchenko.flink.model.Position;
-import com.oyashchenko.flink.model.PositionDeleteEvent;
+import com.oyashchenko.cache.model.Portfolio;
+import com.oyashchenko.cache.model.Position;
 import org.apache.flink.api.common.state.*;
-import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.streaming.api.functions.co.CoProcessFunction;
 import org.apache.flink.streaming.api.functions.co.KeyedCoProcessFunction;
 import org.apache.flink.util.Collector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
+
 
 
 public class PortfolioPositionsPriceJoin extends KeyedCoProcessFunction<Integer,Portfolio, Position, Portfolio> {

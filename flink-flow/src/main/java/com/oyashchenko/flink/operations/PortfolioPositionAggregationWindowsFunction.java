@@ -1,9 +1,8 @@
 package com.oyashchenko.flink.operations;
 
-import com.oyashchenko.flink.model.Portfolio;
-import com.oyashchenko.flink.model.Position;
+import com.oyashchenko.cache.model.Portfolio;
+import com.oyashchenko.cache.model.Position;
 import org.apache.flink.api.common.functions.AggregateFunction;
-import org.apache.flink.api.common.functions.RichAggregateFunction;
 
 public class PortfolioPositionAggregationWindowsFunction implements AggregateFunction<Position, Portfolio, Portfolio> {
     @Override

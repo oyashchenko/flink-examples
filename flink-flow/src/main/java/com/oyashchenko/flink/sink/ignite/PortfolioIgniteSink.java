@@ -1,6 +1,6 @@
 package com.oyashchenko.flink.sink.ignite;
 
-import com.oyashchenko.flink.model.Portfolio;
+import com.oyashchenko.cache.model.Portfolio;
 
 
 public class PortfolioIgniteSink extends IgniteSink<Integer, Portfolio> {

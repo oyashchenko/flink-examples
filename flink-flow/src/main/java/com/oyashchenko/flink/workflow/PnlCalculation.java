@@ -1,6 +1,8 @@
 package com.oyashchenko.flink.workflow;
 
-import com.oyashchenko.flink.model.*;
+import com.oyashchenko.cache.model.*;
+import com.oyashchenko.flink.model.BackpressureMetric;
+import com.oyashchenko.flink.model.PositionDeleteEvent;
 import com.oyashchenko.flink.operations.*;
 import com.oyashchenko.flink.sink.SinkFactory;
 import com.oyashchenko.flink.source.*;
@@ -101,7 +103,7 @@ public class PnlCalculation {
         WindowedStream<Position, Integer, GlobalWindow> portfolioAllWindow = processPositionPriceJoin.keyBy(Position::getLegalEntityId)
                 .window(GlobalWindows.create());
 
-        portfolioAllWindow
+        /*portfolioAllWindow
                 .trigger(
                         new Trigger<Position, GlobalWindow>() {
                             @Override
@@ -146,7 +148,7 @@ public class PnlCalculation {
                         }
                 )
                 .aggregate( new PortfolioPositionAggregationWindowsFunction())
-                .name("PortfolioAllWindow");
+                .name("PortfolioAllWindow");*/
                 //.addSink(portfolioSink).name("PortfolioSink");
 
 

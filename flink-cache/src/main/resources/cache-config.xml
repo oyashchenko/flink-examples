@@ -1,0 +1,82 @@
+<?xml version="1.0"?>
+
+<!--
+ * File: cache-config.xml
+ *
+ * Copyright (c) 2020, 2021 Oracle and/or its affiliates.
+ *
+ * You may not use this file except in compliance with the Universal Permissive
+ * License (UPL), Version 1.0 (the "License.")
+ *
+ * You may obtain a copy of the License at https://opensource.org/licenses/UPL.
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed
+ * under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied.
+ *
+ * See the License for the specific language governing permissions and limitations
+ * under the License.
+-->
+
+<cache-config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xmlns="http://xmlns.oracle.com/coherence/coherence-cache-config"
+              xsi:schemaLocation="http://xmlns.oracle.com/coherence/coherence-cache-config coherence-cache-config.xsd">
+
+    <defaults>
+        <serializer>
+            <instance>
+                <class-name>com.tangosol.io.pof.ConfigurablePofContext</class-name>
+                <init-params>
+                    <init-param>
+                        <param-type>String</param-type>
+                        <param-value>pof-config.xml</param-value>
+                    </init-param>
+                </init-params>
+            </instance>
+        </serializer>
+    </defaults>
+
+    <caching-scheme-mapping>
+        <cache-mapping>
+            <cache-name>Position</cache-name>
+            <scheme-name>distributed-scheme</scheme-name>
+            <key-type>java.lang.String</key-type>
+            <value-type>com.oyashchenko.cache.model.Position</value-type>
+        </cache-mapping>
+        <cache-mapping>
+            <cache-name>Price</cache-name>
+            <scheme-name>distributed-scheme</scheme-name>
+            <key-type>java.lang.Integer</key-type>
+            <value-type>com.oyashchenko.cache.model.PriceTick</value-type>
+        </cache-mapping>
+        <cache-mapping>
+            <cache-name>Portfolio</cache-name>
+            <scheme-name>distributed-scheme</scheme-name>
+            <key-type>java.lang.Integer</key-type>
+            <value-type>com.oyashchenko.flink.model.Portfolio</value-type>
+        </cache-mapping>
+    </caching-scheme-mapping>
+
+    <caching-schemes>
+        <distributed-scheme>
+            <scheme-name>distributed-scheme</scheme-name>
+            <backing-map-scheme>
+                <read-write-backing-map-scheme>
+                    <internal-cache-scheme>
+                        <local-scheme/>
+                    </internal-cache-scheme>
+                    <write-max-batch-size>5000</write-max-batch-size>
+                    <!-- Define the cache scheme. -->
+                    <write-delay>2s</write-delay>
+                </read-write-backing-map-scheme>
+            </backing-map-scheme>
+            <autostart>true</autostart>
+        </distributed-scheme>
+
+        <invocation-scheme>
+            <service-name>InvocationService</service-name>
+            <autostart>true</autostart>
+        </invocation-scheme>
+
+    </caching-schemes>
+</cache-config>

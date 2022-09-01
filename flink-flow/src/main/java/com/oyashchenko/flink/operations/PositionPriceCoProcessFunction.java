@@ -1,7 +1,7 @@
 package com.oyashchenko.flink.operations;
 
-import com.oyashchenko.flink.model.Position;
-import com.oyashchenko.flink.model.PriceTick;
+import com.oyashchenko.cache.model.Position;
+import com.oyashchenko.cache.model.PriceTick;
 import org.apache.flink.api.common.state.*;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -56,7 +56,7 @@ public class PositionPriceCoProcessFunction extends CoProcessFunction<PriceTick,
             Integer secId = position.getSecId();
             List<Position> positions = securityPositions.get(secId);
             if (positions == null ) {
-                List<Position> positionsSec = new ArrayList();
+                List<Position> positionsSec = new ArrayList<Position>();
                 positionsSec.add(position);
                 securityPositions.put(secId, positionsSec);
             } else {
@@ -80,11 +80,13 @@ public class PositionPriceCoProcessFunction extends CoProcessFunction<PriceTick,
             List<Position> positions = securityPositions.get(position.getSecId());
             if (positions != null) {
                 LOG.info("Positions size: {}, Diff le number {}",positions.size(), positions.stream().map(
-                        position1 -> position1.getLegalEntityId()).count());
+                    Position::getLegalEntityId).count()
+                );
                 positions.remove(position);
                 position.setPnl(0d);
                 LOG.info("Positions size after: {}, Diff le number {}",positions.size(), positions.stream().map(
-                        position1 -> position1.getLegalEntityId()).count());
+                    Position::getLegalEntityId).count()
+                );
                 collector.collect(position);//update flag in cache
             }
         }

@@ -1,6 +1,6 @@
 package com.oyashchenko.flink.sink.ignite;
 
-import com.oyashchenko.flink.model.PriceTick;
+import com.oyashchenko.cache.model.PriceTick;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +12,7 @@ public class PriceIgniteSink extends IgniteSink<Integer, PriceTick> {
     }
 
     @Override
-    public void invoke(PriceTick value, Context context) throws Exception {
+    public void invoke(PriceTick value, Context context) {
         long start = System.currentTimeMillis();
         LOG.info("Put price : {} before", value.getRic());
         igniteCache.putAsync(value.getSecId(), value);

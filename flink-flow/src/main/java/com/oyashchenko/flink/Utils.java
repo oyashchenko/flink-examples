@@ -1,7 +1,7 @@
 package com.oyashchenko.flink;
 
-import com.oyashchenko.flink.model.Position;
-import com.oyashchenko.flink.model.PriceTick;
+import com.oyashchenko.cache.model.Position;
+import com.oyashchenko.cache.model.PriceTick;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;

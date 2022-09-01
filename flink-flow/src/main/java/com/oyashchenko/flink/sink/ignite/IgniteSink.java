@@ -3,6 +3,7 @@ package com.oyashchenko.flink.sink.ignite;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.ignite.*;
+import org.apache.ignite.cache.CacheExistsException;
 
 import java.util.Map;
 
@@ -44,7 +45,11 @@ public class IgniteSink<KEY, IN>  extends RichSinkFunction<IN> {
     @Override
     public void close() {
         if (this.ignite != null) {
+            if (igniteCache != null) {
+                igniteCache.destroy();
+            }
             ignite.close();
+
         }
     }
 

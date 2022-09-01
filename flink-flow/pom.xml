@@ -49,11 +49,11 @@ under the License.
             <version>${flink.version}</version>
         </dependency>
 
-        <!--<dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-scala_${flink.version}</artifactId>
+        <dependency>
+            <groupId>com.oyashchenko</groupId>
+            <artifactId>flink-cache</artifactId>
             <version>${project.version}</version>
-        </dependency>-->
+        </dependency>
 
         <dependency>
             <groupId>org.apache.flink</groupId>

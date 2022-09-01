@@ -1,8 +1,7 @@
 package com.oyashchenko.flink.source;
 
 import com.oyashchenko.flink.Utils;
-import com.oyashchenko.flink.model.PriceTick;
-import org.apache.flink.streaming.api.functions.co.RichCoFlatMapFunction;
+import com.oyashchenko.cache.model.PriceTick;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,13 +20,14 @@ public class PriceSource implements SourceFunction<PriceTick> {
 
     @Override
     public void run(SourceContext<PriceTick> sourceContext) throws Exception {
-        Stream<String> lines = Files.lines(Paths.get("price.csv"));
-        lines.forEach(line -> {
-            String[] values = line.split(",");
-            sourceContext.collect(
-                new PriceTick(Integer.parseInt(values[0]), values[1], Double.parseDouble(values[2]), values[3])
-            );
-        });
+        try (Stream<String> lines = Files.lines(Paths.get("price.csv"))) {
+            lines.forEach(line -> {
+                String[] values = line.split(",");
+                sourceContext.collect(
+                        new PriceTick(Integer.parseInt(values[0]), values[1], Double.parseDouble(values[2]), values[3])
+                );
+            });
+        }
         //generate(sourceContext);
     }
 

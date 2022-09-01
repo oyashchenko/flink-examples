@@ -1,6 +1,6 @@
 package com.oyashchenko.flink.sink.ignite;
 
-import com.oyashchenko.flink.model.Position;
+import com.oyashchenko.cache.model.Position;
 
 public class PositionIgniteSink extends IgniteSink<String, Position>  {
 

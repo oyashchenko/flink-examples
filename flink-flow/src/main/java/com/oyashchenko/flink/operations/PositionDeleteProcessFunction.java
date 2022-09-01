@@ -1,6 +1,6 @@
 package com.oyashchenko.flink.operations;
 
-import com.oyashchenko.flink.model.Position;
+import com.oyashchenko.cache.model.Position;
 import com.oyashchenko.flink.model.PositionDeleteEvent;
 import org.apache.flink.api.common.state.ListState;
 import org.apache.flink.api.common.state.ListStateDescriptor;
@@ -31,7 +31,7 @@ public class PositionDeleteProcessFunction extends CoProcessFunction<Position, P
 
         } else {
             LOG.info("DELETE POSITION EVENT:{}, Time :{}",deleteEvent != null,
-                    deleteEvent != null ?position.getEventTime().isBefore(deleteEvent.getEventTime()) : true);
+               deleteEvent == null || position.getEventTime().isBefore(deleteEvent.getEventTime()));
         }
 
         positionListState.add(position);
@@ -54,7 +54,7 @@ public class PositionDeleteProcessFunction extends CoProcessFunction<Position, P
     }
 
     @Override
-    public void open(Configuration parameters) throws Exception {
+    public void open(Configuration parameters) {
         deletedEvent = this.getRuntimeContext().getState(this.getValueDescriptor());
         positionListState = this.getRuntimeContext().getListState(this.getPositionsDescriptor());
     }
