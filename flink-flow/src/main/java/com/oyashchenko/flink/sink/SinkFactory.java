@@ -3,7 +3,6 @@ package com.oyashchenko.flink.sink;
 import com.oyashchenko.cache.model.Portfolio;
 import com.oyashchenko.cache.model.Position;
 import com.oyashchenko.cache.model.PriceTick;
-import com.oyashchenko.flink.sink.coherence.CoherenceSink;
 import com.oyashchenko.flink.sink.coherence.PortfolioCoherenceSink;
 import com.oyashchenko.flink.sink.coherence.PositionCoherenceSink;
 import com.oyashchenko.flink.sink.coherence.PriceCoherenceSink;

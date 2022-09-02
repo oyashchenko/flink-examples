@@ -18,6 +18,6 @@ public class PriceCoherenceSink extends CoherenceSink<Integer, PriceTick> {
         long start = System.currentTimeMillis();
         //cache.put(value.getSecId(), value);
         cache.async().put(value.getSecId(), value);
-        LOG.info("Pushed secId : {}, spend time : {} ms, eventTime : {} ", value.getSecId(), System.currentTimeMillis() - start, value.getEventTime());
+        //LOG.info("Pushed secId : {}, spend time : {} ms, eventTime : {} ", value.getSecId(), System.currentTimeMillis() - start, value.getEventTime());
     }
 }

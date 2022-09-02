@@ -42,6 +42,12 @@ public class Position {
     @QuerySqlField(name = "eventTime")
     private LocalDateTime eventTime;
 
+    @PortableProperty(value = 8)
+    @QuerySqlField(name = "modificationTime")
+    private LocalDateTime modificationTime;
+
+
+
 
     public Position(Integer secId, Integer legalEntityId, Double quantity, String ccy, Double fx) {
         this.secId = secId;
@@ -69,6 +75,7 @@ public class Position {
 
     public void setDeleted(boolean deleted) {
         isDeleted = deleted;
+        modificationTime  = LocalDateTime.now();
     }
 
     public Integer getSecId() {
@@ -109,7 +116,9 @@ public class Position {
                 ", ccy='" + ccy + '\'' +
                 ", fx=" + fx +
                 ", eventTime=" + eventTime +
-                ", isDeleted=" + isDeleted + "}";
+                ", isDeleted=" + isDeleted +
+                ", modificationTime=" + modificationTime +
+                "}";
     }
 
     @Override

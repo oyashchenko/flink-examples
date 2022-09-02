@@ -41,10 +41,14 @@ public class PortfolioPositionsPriceJoin extends KeyedCoProcessFunction<Integer,
         Portfolio portfolio = portfolioState.value();
         if (position.isDeleted()) {
             Position stored = securityPositions.get(position.getSecId());
+            LOG.info("Portfolio before: {} - {}, {}", portfolio.getLegalEntityId(), portfolio.getPnl(), portfolio.getGmv());
             if (stored != null) {
                 portfolio.removeGmv(stored.getQuantity());
                 portfolio.removePnl(stored.getPnl());
+                LOG.info("Clean up - {}:{}", portfolio.getLegalEntityId(), stored.getPnl());
             }
+            LOG.info("Portfolio after: {} - {}, {}", portfolio.getLegalEntityId(), portfolio.getPnl(), portfolio.getGmv());
+
             securityPositions.remove(position.getSecId());
         } else {
             Position old = securityPositions.get(position.getSecId());
@@ -57,7 +61,9 @@ public class PortfolioPositionsPriceJoin extends KeyedCoProcessFunction<Integer,
             portfolio.addPnl(position.getPnl());
             portfolio.gmv(position.getQuantity());
         }
+
         portfolio.updateModificationDate();
+        portfolioState.update(portfolio);
         collector.collect(portfolio);
 
     }

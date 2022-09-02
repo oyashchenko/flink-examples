@@ -82,6 +82,14 @@ public class Portfolio {
         this.gmv = this.gmv - Math.abs(quantity);
     }
 
+    public Double getPnl() {
+        return pnl;
+    }
+
+    public Double getGmv() {
+        return gmv;
+    }
+
     public void updateModificationDate() {
         modificationTime = LocalDateTime.now();
     }

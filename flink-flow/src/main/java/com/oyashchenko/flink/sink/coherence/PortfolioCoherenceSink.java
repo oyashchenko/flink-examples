@@ -16,7 +16,8 @@ public class PortfolioCoherenceSink extends CoherenceSink<Integer, Portfolio> {
     @Override
     public void invoke(Portfolio value, Context context) {
             long start = System.currentTimeMillis();
-            cache.put(value.getLegalEntityId(), value);
-            LOG.info("Pushed position in {}ms : {}  ", System.currentTimeMillis() - start, value.getLegalEntityId());
+            cache.async().put(value.getLegalEntityId(), value);
+            LOG.info("Pushed portfolio in {}ms : {} - {} : {} ", System.currentTimeMillis() - start, value.getLegalEntityId(),
+                    value.getPnl(), value.getModificationTime());
     }
 }

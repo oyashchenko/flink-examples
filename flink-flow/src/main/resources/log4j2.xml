@@ -7,8 +7,9 @@
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p[%t] %-60c %x - %m%n"></PatternLayout>
         </Console>
-        <RollingFile name="FileLogs" fileName="test.log" filePattern="test.log.%d[MMdd}">
-            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p[%t] %-60c %x - %m%n"></PatternLayout>
+        <RollingFile name="FileLogs" fileName="test.log" filePattern="test.log.%d{MMdd}" append="false">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p[%t] %-60c %x - %m%n"
+            ></PatternLayout>
         <TimeBasedTriggeringPolicy/>
         </RollingFile>
         <RollingFile name="FileMetricsLogs" fileName="metrics.log" filePattern="metrics.log.%d{MMdd}">
