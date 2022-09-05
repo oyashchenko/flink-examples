@@ -21,8 +21,10 @@ public class CoherenceSink<KEY, IN> extends RichSinkFunction<IN> {
     }
 
     @Override
-    public void close() throws Exception {
-        super.close();
+    public void close() {
+        if (cache != null) {
+            cache.destroy();
+        }
     }
 
     @Override

@@ -157,7 +157,7 @@ public class PnlCalculation {
 
         logger.info("Started task");
         processPositionPriceJoin.addSink(positionSink).name("PositionSink");
-        portfolioPositionJoin.addSink(portfolioSink).name("PortfolioSink");
+        portfolioPositionJoin.keyBy(Portfolio::getLegalEntityId).addSink(portfolioSink).name("PortfolioSink");
        // priceTickDataSource.addSink(priceCache).name("PriceSink");
         JobExecutionResult jobResults = env.execute("Backpressure ");
 
