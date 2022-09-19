@@ -3,9 +3,16 @@ package com.oyashchenko.flink;
 import com.oyashchenko.cache.model.Position;
 import com.oyashchenko.cache.model.PriceTick;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 public class Utils {
 
@@ -58,5 +65,27 @@ public class Utils {
     public static int generateSecId() {
         //[1-100]
         return 1 + (int) (Math.random() * (100 -1));
+    }
+
+    public static File getFile(String file) throws URISyntaxException {
+        //ClassLoader classLoader = Utils.class.getClassLoader();
+        URL resource = Utils.class.getClassLoader().getResource(file);
+        return resource == null ? new File(file) : new File(resource.toURI());
+
+
+    }
+
+    public static Stream<String> readLines(String file) {
+        InputStream resource = Utils.class.getClassLoader().getResourceAsStream(file);
+        return readLines(resource);
+    }
+    public static Stream<String> readLines(InputStream is) {
+        BufferedReader br = new BufferedReader(new InputStreamReader(is));
+        return br.lines();
+
+    }
+
+    public InputStream getResource(String file) {
+        return Utils.class.getClassLoader().getResourceAsStream(file);
     }
 }

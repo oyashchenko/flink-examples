@@ -17,11 +17,11 @@ public class SinkFactory {
 
     private static final boolean IS_IGNITE = false;
 
-    public static <T> RichSinkFunction getSink(Class<T> clazz) {
+    public static <T> RichSinkFunction getSink(Class<T> clazz, boolean isExtendedClientRun) {
         if (clazz.isAssignableFrom(Position.class)) {
             return IS_IGNITE ?  new PositionIgniteSink("Position", "ignite-cache.xml") : new PositionCoherenceSink("Position");
         } else if (clazz.isAssignableFrom(PriceTick.class)) {
-            return IS_IGNITE ? new PriceIgniteSink("Price", "ignite-cache.xml") : new PriceCoherenceSink("Price");
+            return IS_IGNITE ? new PriceIgniteSink("Price", "ignite-cache.xml") : new PriceCoherenceSink("Price", isExtendedClientRun);
         } else if (clazz.isAssignableFrom(Portfolio.class)) {
             return  IS_IGNITE ? new PortfolioIgniteSink("Portfolio", "ignite-cache.xml") : new PortfolioCoherenceSink("Portfolio");
         }

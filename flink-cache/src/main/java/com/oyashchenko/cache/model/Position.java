@@ -42,7 +42,7 @@ public class Position {
     @QuerySqlField(name = "eventTime")
     private LocalDateTime eventTime;
 
-    @PortableProperty(value = 8)
+    @PortableProperty(value = 9)
     @QuerySqlField(name = "modificationTime")
     private LocalDateTime modificationTime;
 

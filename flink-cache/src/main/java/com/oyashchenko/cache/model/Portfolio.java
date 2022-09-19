@@ -1,6 +1,5 @@
 package com.oyashchenko.cache.model;
 
-import com.tangosol.io.pof.PortableObject;
 import com.tangosol.io.pof.annotation.Portable;
 import com.tangosol.io.pof.annotation.PortableProperty;
 import org.apache.ignite.cache.query.annotations.QuerySqlField;

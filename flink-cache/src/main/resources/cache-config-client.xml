@@ -39,45 +39,64 @@
     <caching-scheme-mapping>
         <cache-mapping>
             <cache-name>Position</cache-name>
-            <scheme-name>distributed-scheme</scheme-name>
+            <scheme-name>remote</scheme-name>
             <key-type>java.lang.String</key-type>
             <value-type>com.oyashchenko.cache.model.Position</value-type>
         </cache-mapping>
         <cache-mapping>
             <cache-name>Price</cache-name>
-            <scheme-name>distributed-scheme</scheme-name>
+            <scheme-name>remote</scheme-name>
             <key-type>java.lang.Integer</key-type>
             <value-type>com.oyashchenko.cache.model.PriceTick</value-type>
         </cache-mapping>
         <cache-mapping>
             <cache-name>Portfolio</cache-name>
-            <scheme-name>distributed-scheme</scheme-name>
+            <scheme-name>remote</scheme-name>
             <key-type>java.lang.Integer</key-type>
             <value-type>com.oyashchenko.flink.model.Portfolio</value-type>
         </cache-mapping>
     </caching-scheme-mapping>
 
     <caching-schemes>
-        <distributed-scheme>
-            <scheme-name>distributed-scheme</scheme-name>
-            <backing-map-scheme>
-                <read-write-backing-map-scheme>
-                    <internal-cache-scheme>
-                        <local-scheme/>
-                    </internal-cache-scheme>
-                    <write-max-batch-size>5000</write-max-batch-size>
-                    <!-- Define the cache scheme. -->
-                    <write-delay>2s</write-delay>
-                </read-write-backing-map-scheme>
-            </backing-map-scheme>
-            <autostart>true</autostart>
-        </distributed-scheme>
+        <remote-cache-scheme>
+            <scheme-name>remote</scheme-name>
+            <service-name>ExtendTcpCacheService</service-name>
+            <initiator-config>
+                <tcp-initiator>
+                    <remote-addresses>
+                        <socket-address>
+                            <address system-property="proxy.address">192.168.0.12</address>
+                            <port system-property="proxy.port">9099</port>
+                        </socket-address>
+                    </remote-addresses>
 
-        <invocation-scheme>
-            <service-name>InvocationService</service-name>
-            <autostart>true</autostart>
-        </invocation-scheme>
+                </tcp-initiator>
+                <outgoing-message-handler>
+                    <request-timeout>5s</request-timeout>
+                </outgoing-message-handler>
+                <connect-timeout>10s</connect-timeout>
+            </initiator-config>
+        </remote-cache-scheme>
 
+        <remote-invocation-scheme>
+            <scheme-name>extend-invocation</scheme-name>
+            <service-name>ExtendTcpInvocationService</service-name>
+            <initiator-config>
+                <tcp-initiator>
+                    <remote-addresses>
+                        <socket-address>
+                            <address>host.docker.internal</address>
+                            <port>9099</port>
+                        </socket-address>
+                    </remote-addresses>
+
+                </tcp-initiator>
+                <outgoing-message-handler>
+                    <request-timeout>5s</request-timeout>
+                </outgoing-message-handler>
+                <connect-timeout>10s</connect-timeout>
+            </initiator-config>
+        </remote-invocation-scheme>
     </caching-schemes>
 
 </cache-config>

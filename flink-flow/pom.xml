@@ -136,31 +136,67 @@ under the License.
                     <target>8</target>
                 </configuration>
             </plugin>
-            <!--<plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <executions>
-                  <execution>
-                <id>examples</id>
-                <phase>package</phase>
-                <goals>
-                    <goal>jar</goal>
-                </goals>
-
+                <version>3.2.2</version>
                 <configuration>
-                    <classifier>examples</classifier>
-
+                    <classifier>original</classifier>
                     <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>libs/</classpathPrefix>
+                        </manifest>
                         <manifestEntries>
+
                             <program-class>com.oyashchenko.flink.workflow.PnlCalculation</program-class>
                         </manifestEntries>
                     </archive>
                 </configuration>
-            </execution>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/libs</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <mainClass>com.oyashchenko.flink.workflow.PnlCalculation</mainClass>
+                                </manifest>
+                            </archive>
+                           <descriptorRefs>
+                               <descriptorRefs>jar-with-dependencies</descriptorRefs>
+                           </descriptorRefs>
+                        </configuration>
+
+                    </execution>
                 </executions>
             </plugin>
 
--->
         </plugins>
     </build>
 </project>

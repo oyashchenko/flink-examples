@@ -15,10 +15,13 @@ import java.util.stream.Stream;
 
 public class PositionSource implements SourceFunction<Position> {
 
+    private static final String POSITIONS_CSV = "positions.csv";
+
     @Override
     public void run(SourceContext<Position> sourceContext) throws Exception {
        // generate(sourceContext);
-        try (Stream<String> lines = Files.lines(Paths.get("positions.csv"))) {
+
+        try (Stream<String> lines = Utils.readLines(POSITIONS_CSV)) {
             lines.forEach(
                     line -> {
                         String[] values = line.split(",");
@@ -39,7 +42,7 @@ public class PositionSource implements SourceFunction<Position> {
 
 
     private void generate(SourceContext<Position> sourceContext) throws IOException {
-        try (FileWriter wr = new FileWriter("positions.csv")) {
+        try (FileWriter wr = new FileWriter(POSITIONS_CSV)) {
 
             String ccy = "USD";
             double fx = 1d;

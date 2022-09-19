@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
@@ -17,23 +18,23 @@ import java.util.stream.Stream;
 public class PriceSource implements SourceFunction<PriceTick> {
     private static final Logger LOG = LoggerFactory.getLogger(PriceSource.class);
     private static final long PER_TIME = 1; //1s
+    private static final String PRICE_CSV = "price.csv";
 
     @Override
     public void run(SourceContext<PriceTick> sourceContext) throws Exception {
-        try (Stream<String> lines = Files.lines(Paths.get("price.csv"))) {
+        try (Stream<String> lines = Utils.readLines(PRICE_CSV) ){
             lines.forEach(line -> {
                 String[] values = line.split(",");
                 sourceContext.collect(
                         new PriceTick(Integer.parseInt(values[0]), values[1], Double.parseDouble(values[2]), values[3])
                 );
-            });
+            }); //need close input resources
         }
         //generate(sourceContext);
     }
 
     private void generate(SourceContext<PriceTick> sourceContext) throws IOException, InterruptedException {
-        try(FileWriter fr = new FileWriter("price.csv")) {
-
+        try(FileWriter fr = new FileWriter(PRICE_CSV)) {
             long startTime = System.currentTimeMillis();
             long eventsSnap = startTime;
             long eventsPerSec = 0;

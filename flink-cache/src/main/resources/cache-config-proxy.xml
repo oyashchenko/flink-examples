@@ -73,11 +73,18 @@
             <autostart>true</autostart>
         </distributed-scheme>
 
-        <invocation-scheme>
-            <service-name>InvocationService</service-name>
+        <proxy-scheme>
+            <service-name>ExtendTcpProxyService</service-name>
+            <acceptor-config>
+                <tcp-acceptor>
+                    <local-address>
+                        <address>host.docker.internal</address>
+                        <port>9099</port>
+                    </local-address>
+                </tcp-acceptor>
+            </acceptor-config>
             <autostart>true</autostart>
-        </invocation-scheme>
-
+        </proxy-scheme>
     </caching-schemes>
 
 </cache-config>

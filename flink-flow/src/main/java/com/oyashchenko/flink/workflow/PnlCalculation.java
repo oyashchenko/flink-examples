@@ -45,16 +45,29 @@ public class PnlCalculation {
         //localSettings.put("metrics.reporter.slf.interval","20 SECONDS");
 
         Configuration configuration = Configuration.fromMap(localSettings);
+        StreamExecutionEnvironment env = null;
+        boolean isLocal = false;
+        if (args.length > 0) {
+            if (args[0].equalsIgnoreCase("local")) {
+                env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(
+                        configuration
+                );
+                isLocal = true;
+            }
+        }
+        if (env == null) {
+            localSettings.put("flink.StreamExecutionEnvironment","server");
+            configuration = Configuration.fromMap(localSettings);
+            env = StreamExecutionEnvironment.getExecutionEnvironment(configuration);
+        }
 
-        final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(
-                configuration
-        );
+
 
         env.setParallelism(3);
         //Data sources
         DataStreamSource<Position> positionDataSource = env.addSource(new PositionSource(),"Position Source");
         DataStreamSource<PriceTick> priceTickDataSource = env.addSource(new PriceSource(),"Price ticks");
-        DataStreamSource<BackpressureMetric> backpressureMetricsSource = env.fromSource(metricsSource(), WatermarkStrategy.noWatermarks(), "Metrics").setParallelism(1);
+        DataStreamSource<BackpressureMetric> backpressureMetricsSource = env.fromSource(metricsSource(isLocal), WatermarkStrategy.noWatermarks(), "Metrics").setParallelism(1);
         DataStreamSource<PositionDeleteEvent> positionDeleteSource = env.addSource(new PositionDeleteEventSource(), "Delete Position");
         DataStreamSource<Portfolio> portfolioDataSource = env.fromCollection(
             Arrays.asList(new Portfolio(1), new Portfolio(2))
@@ -67,9 +80,9 @@ public class PnlCalculation {
             .broadcast(stateOfBackPressure);
 
         //Sinks
-        RichSinkFunction<PriceTick> priceCache = SinkFactory.getSink(PriceTick.class);
-        RichSinkFunction<Position> positionSink = SinkFactory.getSink(Position.class);
-        RichSinkFunction<Portfolio> portfolioSink = SinkFactory.getSink(Portfolio.class);
+        RichSinkFunction<PriceTick> priceCache = SinkFactory.getSink(PriceTick.class, !isLocal);
+        RichSinkFunction<Position> positionSink = SinkFactory.getSink(Position.class, !isLocal);
+        RichSinkFunction<Portfolio> portfolioSink = SinkFactory.getSink(Portfolio.class, !isLocal);
 
         SingleOutputStreamOperator<PriceTick> priceCountEventsStream  = priceTickDataSource
             .keyBy(PriceTick::getSecId)
@@ -79,7 +92,7 @@ public class PnlCalculation {
                 .process(new BroadcastPriceBackPressureMetricsProcessFunction()).name("Price Throttle").setParallelism(3);
 
 
-        priceThrottle.keyBy(PriceTick::getSecId).addSink(priceCache).name("PriceSink").setParallelism(3);
+        priceThrottle.keyBy(PriceTick::getSecId).addSink(priceCache).name("PriceSink").setParallelism(1);
 
         SingleOutputStreamOperator<Position> positionsWithDeleteEventJoin = positionDataSource
             .keyBy(Position::getLegalEntityId)
@@ -156,18 +169,19 @@ public class PnlCalculation {
 
 
         logger.info("Started task");
-        processPositionPriceJoin.addSink(positionSink).name("PositionSink");
-        portfolioPositionJoin.keyBy(Portfolio::getLegalEntityId).addSink(portfolioSink).name("PortfolioSink");
+        processPositionPriceJoin.addSink(positionSink).name("PositionSink").setParallelism(1);
+        portfolioPositionJoin.keyBy(Portfolio::getLegalEntityId).addSink(portfolioSink).name("PortfolioSink").setParallelism(1);
        // priceTickDataSource.addSink(priceCache).name("PriceSink");
         JobExecutionResult jobResults = env.execute("Backpressure ");
 
     }
 
-    private static KafkaSource<BackpressureMetric> metricsSource() {
+    private static KafkaSource<BackpressureMetric> metricsSource(boolean local) {
         return KafkaSource.<BackpressureMetric>builder()
-                .setBootstrapServers("localhost:9092")
+                .setBootstrapServers(local ? "localhost:9092" :"host.docker.internal:19092")
                 .setTopics("backPressureEventTopic")
                 .setGroupId("my-group")
+                .setClientIdPrefix("metrics")
                 .setStartingOffsets(OffsetsInitializer.earliest())
                 .setDeserializer(KafkaRecordDeserializationSchema.valueOnly(
                         BackpressureMetricsDeserializer.class))

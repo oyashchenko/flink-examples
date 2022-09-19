@@ -36,7 +36,6 @@ public class PortfolioPositionAggregationWindowsFunction implements AggregateFun
 
     @Override
     public Portfolio merge(Portfolio portfolio, Portfolio acc1) {
-        System.out.println(portfolio + "Portf" + acc1);
         return  portfolio.getModificationTime().isAfter(acc1.getModificationTime()) ? portfolio : acc1;
     }
 }

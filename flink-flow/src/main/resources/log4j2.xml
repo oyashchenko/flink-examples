@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Configuration xmlns="http://logging.apache.org/log4j/2.0/config">
-    <Properties>
-        <Property name="logPath">target/logs</Property>
+    <Properties>/
+        <Property name="logPath">/tmp</Property>
     </Properties>
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p[%t] %-60c %x - %m%n"></PatternLayout>
         </Console>
-        <RollingFile name="FileLogs" fileName="test.log" filePattern="test.log.%d{MMdd}" append="false">
+        <RollingFile name="FileLogs" fileName="${logPath}/test.log" filePattern="test.log.%d{MMdd}" append="false">
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p[%t] %-60c %x - %m%n"
             ></PatternLayout>
         <TimeBasedTriggeringPolicy/>

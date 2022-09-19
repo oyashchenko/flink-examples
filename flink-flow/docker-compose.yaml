@@ -1,0 +1,38 @@
+version: "2.2"
+services:
+  jobmanager:
+    image: flink-flow
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    command: jobmanager
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager        
+
+  taskmanager:
+    image: flink-flow
+    depends_on:
+      - jobmanager
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: taskmanager
+    scale: 1
+   #expose:
+    #  - "9000"
+    ports:
+      - "9000-9090:9000-9090"
+      - "9000-9050:9000-9050/udp"
+      - "7574:7574/tcp"
+      - "7573-7575:7573-7575/udp"
+      - "7:7/tcp"
+      - "9099:9099/tcp"
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 8
