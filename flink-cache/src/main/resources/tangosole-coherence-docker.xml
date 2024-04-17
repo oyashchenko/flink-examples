@@ -1,0 +1,41 @@
+<?xml version='1.0'?>
+
+<!DOCTYPE coherence SYSTEM "coherence.dtd">
+
+<coherence>
+    <cluster-config>
+        <member-identity>
+            <cluster-name>flink-coherence-cluster</cluster-name>
+        </member-identity>
+
+        <!--<multicast-listener>
+            <address>192.168.0.12</address>
+            <port>8091</port>
+            <time-to-live>0</time-to-live>
+        </multicast-listener>-->
+
+        <unicast-listener>
+          <well-known-addresses>
+            <socket-address id="1">
+                <address>192.168.0.12</address>
+                <port>9000</port>
+            </socket-address>
+                <socket-address id="2">
+                    <address>host.docker.internal</address>
+                    <port>9001</port>
+                </socket-address>
+        </well-known-addresses>
+        </unicast-listener>
+
+    </cluster-config>
+
+    <configurable-cache-factory-config>
+        <init-params>
+            <init-param>
+                <param-type>java.lang.String</param-type>
+                <param-value system-property="tangosol.coherence.cacheconfig">cache-config-client.xml</param-value>
+            </init-param>
+        </init-params>
+
+    </configurable-cache-factory-config>
+</coherence>

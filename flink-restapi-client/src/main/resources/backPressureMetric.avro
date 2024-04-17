@@ -1,0 +1,5 @@
+{
+"type": "record",
+"name": "AvroBackPressureMetric",
+"namespace": "com.oyashchenko.flink.restclient.kafka.avro"
+}

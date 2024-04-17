@@ -23,6 +23,5 @@
                     cache-config.xml</param-value>
             </init-param>
         </init-params>
-
     </configurable-cache-factory-config>
 </coherence>
